@@ -20,9 +20,9 @@ def get_steer_matrix_left_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
     corner_width = shape[1] // 2   # Half of the image width (you can adjust this)
 
     # Set the bottom-left corner to 0 (black)
-    steer_matrix_left[corner_height:, :corner_width] = 0.5  # Mask the left-bottom corner
+    steer_matrix_left[corner_height:, :corner_width] = 0.7  # Mask the left-bottom corner
     # Mask the top-right corner (top right region)
-    steer_matrix_left[:corner_height, corner_width:] = 0.5  # Mask the top-right corner
+    steer_matrix_left[:corner_height, corner_width:] = 0.7  # Mask the top-right corner
 
     # ---
     return steer_matrix_left
@@ -46,9 +46,9 @@ def get_steer_matrix_right_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
     corner_width = shape[1] // 2   # Half of the image width (you can adjust this)
 
     # Set the bottom-left corner to 0 (black)
-    steer_matrix_right[:corner_height, :corner_width] = 0.5  # Mask the left-bottom corner
+    steer_matrix_right[:corner_height, :corner_width] = -0.4  # Mask the left-bottom corner
     # Mask the top-right corner (top right region)
-    steer_matrix_right[corner_height:, :corner_width] = 0.5  # Mask the top-right corner
+    steer_matrix_right[corner_height:, :corner_width] = -0.4  # Mask the top-right corner
 
     # ---
     return steer_matrix_right
