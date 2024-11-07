@@ -15,7 +15,7 @@ def get_steer_matrix_left_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
     """
 
     # TODO: implement your own solution here
-    steer_matrix_left = np.zeros(*shape)
+    steer_matrix_left = np.zeros(shape)
     corner_height = shape[0] // 2  # Half of the image height (you can adjust this)
     corner_width = shape[1] // 2   # Half of the image width (you can adjust this)
 
@@ -40,7 +40,7 @@ def get_steer_matrix_right_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
 
     # TODO: implement your own solution here
     
-    steer_matrix_right = np.zeros(*shape)
+    steer_matrix_right = np.zeros(shape)
     
     corner_height = shape[0] // 2  # Half of the image height (you can adjust this)
     corner_width = shape[1] // 2   # Half of the image width (you can adjust this)
