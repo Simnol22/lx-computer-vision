@@ -15,7 +15,15 @@ def get_steer_matrix_left_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
     """
 
     # TODO: implement your own solution here
-    steer_matrix_left = np.random.rand(*shape)
+    steer_matrix_left = np.zeros(*shape)
+    corner_height = shape[0] // 2  # Half of the image height (you can adjust this)
+    corner_width = shape[1] // 2   # Half of the image width (you can adjust this)
+
+    # Set the bottom-left corner to 0 (black)
+    steer_matrix_left[corner_height:, :corner_width] = 0.5  # Mask the left-bottom corner
+    # Mask the top-right corner (top right region)
+    steer_matrix_left[:corner_height, corner_width:] = 0.5  # Mask the top-right corner
+
     # ---
     return steer_matrix_left
 
@@ -31,7 +39,17 @@ def get_steer_matrix_right_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
     """
 
     # TODO: implement your own solution here
-    steer_matrix_right = np.random.rand(*shape)
+    
+    steer_matrix_right = np.zeros(*shape)
+    
+    corner_height = shape[0] // 2  # Half of the image height (you can adjust this)
+    corner_width = shape[1] // 2   # Half of the image width (you can adjust this)
+
+    # Set the bottom-left corner to 0 (black)
+    steer_matrix_right[:corner_height, :corner_width] = 0.5  # Mask the left-bottom corner
+    # Mask the top-right corner (top right region)
+    steer_matrix_right[corner_height:, :corner_width] = 0.5  # Mask the top-right corner
+
     # ---
     return steer_matrix_right
 
@@ -47,7 +65,67 @@ def detect_lane_markings(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     h, w, _ = image.shape
 
     # TODO: implement your own solution here
-    mask_left_edge = np.random.rand(h, w)
-    mask_right_edge = np.random.rand(h, w)
+
+    # Convert the image to HSV for any color-based filtering
+    imghsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    # Most of our operations will be performed on the grayscale version
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    #0. mask ground
+    mask_ground = np.ones(img.shape, dtype=np.uint8)  # Start with a mask of ones (white)
+
+    # Calculate the midpoint (half of the height)
+    mid_point = img.shape[0] // 2  # Integer division to get the middle row index
+
+    # Set the top half of the image to 0 (black)
+    mask_ground[:mid_point-30, :] = 0  # Mask the top half (rows 0 to mid_point-1)
+
+    #1. Gaussian filter
+    sigma = 3.7# CHANGE ME
+
+    # Smooth the image using a Gaussian kernel
+    img_gaussian_filter = cv2.GaussianBlur(img,(0,0), sigma)
+
+    #2 sobel and gmag
+    # Convolve the image with the Sobel operator (filter) to compute the numerical derivatives in the x and y directions
+    sobelx = cv2.Sobel(img_gaussian_filter,cv2.CV_64F,1,0)
+    sobely = cv2.Sobel(img_gaussian_filter,cv2.CV_64F,0,1)
+
+    # Compute the magnitude of the gradients
+    Gmag = np.sqrt(sobelx*sobelx + sobely*sobely)
+
+    #3 GMag treshold
+    threshold = 40 
+    mask_mag = (Gmag > threshold)
+
+    #4 Mask yellow and white
+
+    white_lower_hsv = np.array([0,(0*255)/100,(60*255)/100]) # [0,0,50] - [230,100,255]
+    white_upper_hsv = np.array([150,(40*255)/100,(100*255)/100])   # CHANGE ME
+
+    yellow_lower_hsv = np.array([(40*179)/360, (40*255)/100, (40*255)/100])        # CHANGE ME
+    yellow_upper_hsv = np.array([(80*179)/360, (100*255)/100, (90*255)/100])  # CHANGE ME
+
+
+    mask_white = cv2.inRange(imghsv, white_lower_hsv, white_upper_hsv)
+    mask_yellow = cv2.inRange(imghsv, yellow_lower_hsv, yellow_upper_hsv)
+
+
+    #5 Edge masking
+    # Let's create masks for the left- and right-halves of the image
+    mask_left = np.ones(sobelx.shape)
+    mask_left[:,int(np.floor(w/2)):w + 1] = 0
+    mask_right = np.ones(sobelx.shape)
+    mask_right[:,0:int(np.floor(w/2))] = 0
+
+    mask_sobelx_pos = (sobelx > 0)
+    mask_sobelx_neg = (sobelx < 0)
+    mask_sobely_pos = (sobely > 0)
+    mask_sobely_neg = (sobely < 0)
+
+    #6 combine
+    mask_left_edge = mask_ground * mask_left * mask_mag * mask_sobelx_neg * mask_sobely_neg * mask_yellow
+    mask_right_edge =  mask_ground * mask_right * mask_mag * mask_sobelx_pos * mask_sobely_neg * mask_white
 
     return mask_left_edge, mask_right_edge
