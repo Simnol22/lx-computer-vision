@@ -13,16 +13,17 @@ def get_steer_matrix_left_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
         steer_matrix_left:  The steering (angular rate) matrix for reactive control
                             using the masked left lane markings (numpy.ndarray)
     """
-
+    w = shape[0]
     # TODO: implement your own solution here
-    steer_matrix_left = np.zeros(shape)
-    corner_height = shape[0] // 2  # Half of the image height (you can adjust this)
-    corner_width = shape[1] // 2   # Half of the image width (you can adjust this)
+    steer_matrix_left = np.ones(shape)
+    #steer_matrix_left[:,0:int(np.floor(w/2))] = 0
 
+    coef = -0.45
+    steer_matrix_left *= coef
     # Set the bottom-left corner to 0 (black)
-    steer_matrix_left[corner_height:, :corner_width] = 0.7  # Mask the left-bottom corner
+    # steer_matrix_left[corner_height:, :corner_width] = 0.5  # Mask the left-bottom corner
     # Mask the top-right corner (top right region)
-    steer_matrix_left[:corner_height, corner_width:] = 0.7  # Mask the top-right corner
+     # steer_matrix_left[:corner_height, corner_width:] = 0.5  # Mask the top-right corner
 
     # ---
     return steer_matrix_left
@@ -39,16 +40,16 @@ def get_steer_matrix_right_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
     """
 
     # TODO: implement your own solution here
-    
-    steer_matrix_right = np.zeros(shape)
-    
-    corner_height = shape[0] // 2  # Half of the image height (you can adjust this)
-    corner_width = shape[1] // 2   # Half of the image width (you can adjust this)
+    w = shape[0]
+    steer_matrix_right = np.ones(shape)
+    #steer_matrix_right[:,int(np.floor(w/2)):w + 1] = 0
 
+    coef = 0.35
+    steer_matrix_right *= coef
     # Set the bottom-left corner to 0 (black)
-    steer_matrix_right[:corner_height, :corner_width] = -0.4  # Mask the left-bottom corner
+    #steer_matrix_right[:corner_height, :corner_width] = -0.5  # Mask the left-bottom corner
     # Mask the top-right corner (top right region)
-    steer_matrix_right[corner_height:, :corner_width] = -0.4  # Mask the top-right corner
+    #steer_matrix_right[corner_height:, corner_width:] = -0.5  # Mask the top-right corner
 
     # ---
     return steer_matrix_right
@@ -63,7 +64,6 @@ def detect_lane_markings(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         mask_right_edge:  Masked image for the solid-white line (numpy.ndarray)
     """
     h, w, _ = image.shape
-
     # TODO: implement your own solution here
 
     # Convert the image to HSV for any color-based filtering
@@ -82,7 +82,7 @@ def detect_lane_markings(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     mask_ground[:mid_point-30, :] = 0  # Mask the top half (rows 0 to mid_point-1)
 
     #1. Gaussian filter
-    sigma = 3.7# CHANGE ME
+    sigma = 3.5# CHANGE ME
 
     # Smooth the image using a Gaussian kernel
     img_gaussian_filter = cv2.GaussianBlur(img,(0,0), sigma)
@@ -96,7 +96,7 @@ def detect_lane_markings(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     Gmag = np.sqrt(sobelx*sobelx + sobely*sobely)
 
     #3 GMag treshold
-    threshold = 40 
+    threshold = 35
     mask_mag = (Gmag > threshold)
 
     #4 Mask yellow and white
@@ -104,8 +104,8 @@ def detect_lane_markings(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     white_lower_hsv = np.array([0,(0*255)/100,(60*255)/100]) # [0,0,50] - [230,100,255]
     white_upper_hsv = np.array([150,(40*255)/100,(100*255)/100])   # CHANGE ME
 
-    yellow_lower_hsv = np.array([(40*179)/360, (40*255)/100, (40*255)/100])        # CHANGE ME
-    yellow_upper_hsv = np.array([(80*179)/360, (100*255)/100, (90*255)/100])  # CHANGE ME
+    yellow_lower_hsv = np.array([(30*179)/360, (30*255)/100, (30*255)/100])        # CHANGE ME
+    yellow_upper_hsv = np.array([(90*179)/360, (110*255)/100, (100*255)/100])  # CHANGE ME
 
 
     mask_white = cv2.inRange(imghsv, white_lower_hsv, white_upper_hsv)
@@ -125,7 +125,7 @@ def detect_lane_markings(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     mask_sobely_neg = (sobely < 0)
 
     #6 combine
-    mask_left_edge = mask_ground * mask_left * mask_mag * mask_sobelx_neg * mask_sobely_neg * mask_yellow
+    mask_left_edge =  mask_ground * mask_left * mask_mag * mask_sobelx_neg * mask_sobely_neg * mask_yellow
     mask_right_edge =  mask_ground * mask_right * mask_mag * mask_sobelx_pos * mask_sobely_neg * mask_white
 
     return mask_left_edge, mask_right_edge

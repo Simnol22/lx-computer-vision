@@ -155,11 +155,14 @@ class LaneServoingNode(DTROS):
 
         steer_matrix_left_lm = visual_servoing_solution.get_steer_matrix_left_lane_markings(shape)
         steer_matrix_right_lm = visual_servoing_solution.get_steer_matrix_right_lane_markings(shape)
-
+      
         # Call the user-defined function to get the masks for the left
         # and right lane markings
         (lt_mask, rt_mask) = visual_servoing_solution.detect_lane_markings(image)
-
+        self.loginfo(
+            f"left lane val: {float(np.sum(lt_mask * steer_matrix_left_lm))},"
+            f"right lane val : {float(np.sum(rt_mask * steer_matrix_right_lm))}"
+        )
         # Publish these out for visualization
         lt_mask_viz = cv2.addWeighted(
             cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), 0.1, lt_mask.astype(np.uint8), 0.8, 0
@@ -191,6 +194,10 @@ class LaneServoingNode(DTROS):
             self.logerr("Not Calibrated!")
             return
 
+        self.loginfo(
+            f"left lane val: {float(np.sum(lt_mask * steer_matrix_left_lm))},"
+            f"right lane val : {float(np.sum(rt_mask * steer_matrix_right_lm))}"
+        )
         steer = float(np.sum(lt_mask * steer_matrix_left_lm)) + float(np.sum(rt_mask * steer_matrix_right_lm))
 
         # now rescale from 0 to 1
