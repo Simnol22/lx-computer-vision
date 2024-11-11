@@ -44,7 +44,7 @@ def get_steer_matrix_right_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
     steer_matrix_right = np.ones(shape)
     #steer_matrix_right[:,int(np.floor(w/2)):w + 1] = 0
 
-    coef = 0.35
+    coef = 0.38
     steer_matrix_right *= coef
     # Set the bottom-left corner to 0 (black)
     #steer_matrix_right[:corner_height, :corner_width] = -0.5  # Mask the left-bottom corner
