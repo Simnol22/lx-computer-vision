@@ -2,6 +2,8 @@ from typing import Tuple
 
 import numpy as np
 import cv2
+import os
+import rospy
 
 
 def get_steer_matrix_left_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
@@ -13,17 +15,8 @@ def get_steer_matrix_left_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
         steer_matrix_left:  The steering (angular rate) matrix for reactive control
                             using the masked left lane markings (numpy.ndarray)
     """
-    w = shape[0]
-    # TODO: implement your own solution here
     steer_matrix_left = np.ones(shape)
-    #steer_matrix_left[:,0:int(np.floor(w/2))] = 0
-
-    coef = -0.55
-    steer_matrix_left *= coef
-    # Set the bottom-left corner to 0 (black)
-    # steer_matrix_left[corner_height:, :corner_width] = 0.5  # Mask the left-bottom corner
-    # Mask the top-right corner (top right region)
-     # steer_matrix_left[:corner_height, corner_width:] = 0.5  # Mask the top-right corner
+    steer_matrix_left *= float(rospy.get_param("LEFT_COEF")) #Defined in the Node, with default values in the __init__
 
     # ---
     return steer_matrix_left
@@ -38,18 +31,8 @@ def get_steer_matrix_right_lane_markings(shape: Tuple[int, int]) -> np.ndarray:
         steer_matrix_right:  The steering (angular rate) matrix for reactive control
                              using the masked right lane markings (numpy.ndarray)
     """
-
-    # TODO: implement your own solution here
-    w = shape[0]
     steer_matrix_right = np.ones(shape)
-    #steer_matrix_right[:,int(np.floor(w/2)):w + 1] = 0
-
-    coef = 0.38
-    steer_matrix_right *= coef
-    # Set the bottom-left corner to 0 (black)
-    #steer_matrix_right[:corner_height, :corner_width] = -0.5  # Mask the left-bottom corner
-    # Mask the top-right corner (top right region)
-    #steer_matrix_right[corner_height:, corner_width:] = -0.5  # Mask the top-right corner
+    steer_matrix_right *= float(rospy.get_param("RIGHT_COEF"))
 
     # ---
     return steer_matrix_right
@@ -82,7 +65,7 @@ def detect_lane_markings(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     mask_ground[:mid_point-30, :] = 0  # Mask the top half (rows 0 to mid_point-1)
 
     #1. Gaussian filter
-    sigma = 3.5# CHANGE ME
+    sigma = 3.5
 
     # Smooth the image using a Gaussian kernel
     img_gaussian_filter = cv2.GaussianBlur(img,(0,0), sigma)

@@ -38,7 +38,7 @@ class LaneServoingNode(DTROS):
         # get the name of the robot
         self.veh = rospy.get_namespace().strip("/")
 
-        self.v_0 = 0.3  # Forward velocity command
+        self.v_0 = 0.35  # Forward velocity command
 
         # The following are used for scaling
         self.steer_max = -1
@@ -53,7 +53,7 @@ class LaneServoingNode(DTROS):
         self.VLS_ACTION = None
         self.VLS_STOPPED = True
 
-        # Defining subscribers:
+        # Defining  can't even see my real bot in novncsubscribers:
         rospy.Subscriber(
             f"/{self.veh}/rectifier_node/image/compressed",
             CompressedImage,
@@ -86,6 +86,9 @@ class LaneServoingNode(DTROS):
 
         self.loginfo("Initialized!")
 
+        #Default valus for left and right coefficients. This is done to help tune the weighted matrices in real-time
+        rospy.set_param('LEFT_COEF', -0.82)
+        rospy.set_param('RIGHT_COEF', 0.34)
 
     def cb_action(self, msg):
         """
@@ -110,6 +113,8 @@ class LaneServoingNode(DTROS):
                 "you are working with the simulator. Turn the robot (in place), to the left "
                 "then to the right by about 30deg on each side. Press [Go] when done."
             )
+            self.loginfo(f"left : {rospy.get_param('LEFT_COEF')}")
+            self.loginfo(f"right : {rospy.get_param('RIGHT_COEF')}")
             return
 
         if self.VLS_ACTION == "go":
@@ -159,10 +164,7 @@ class LaneServoingNode(DTROS):
         # Call the user-defined function to get the masks for the left
         # and right lane markings
         (lt_mask, rt_mask) = visual_servoing_solution.detect_lane_markings(image)
-        self.loginfo(
-            f"left lane val: {float(np.sum(lt_mask * steer_matrix_left_lm))},"
-            f"right lane val : {float(np.sum(rt_mask * steer_matrix_right_lm))}"
-        )
+
         # Publish these out for visualization
         lt_mask_viz = cv2.addWeighted(
             cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), 0.1, lt_mask.astype(np.uint8), 0.8, 0
